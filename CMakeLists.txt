@@ -34,7 +34,7 @@ endif()
 
 macro(add_benchmark benchmark)
 
-    add_executable(${benchmark} "${benchmark}.c")
+    add_executable(${benchmark} "${benchmark}.cpp")
 
     target_include_directories(${benchmark} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include/>)
     
