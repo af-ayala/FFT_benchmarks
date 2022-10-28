@@ -10,7 +10,7 @@ if (ENABLE_CUFFT)
     list(APPEND BENCH_FFT_OPTIONS "CUDA_TOOLKIT_ROOT_DIR")
 endif()
 
-foreach(_opt ROCFFT CUFFT FFTW)
+foreach(_opt CUFFT ROCFFT VKFFT FFTW)
     list(APPEND OPTIONS "ENABLE_${_opt}")
 endforeach()
 
