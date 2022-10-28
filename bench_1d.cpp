@@ -24,14 +24,12 @@ cmake -DENABLE_CUFFT = ON ..
     #define device_mfree(g_) cudaFree((g_));
     #define gpu_copy_h2d(h_, g_, size_) cudaMemcpy((g_), (h_), (size_), cudaMemcpyHostToDevice)
     #define gpu_copy_d2h(h_, g_, size_) cudaMemcpy((h_), (g_), (size_), cudaMemcpyDeviceToHost)
-    
 #elif defined(ENABLE_ROCFFT)
     #ifndef __HIP_PLATFORM_HCC__
     #define __HIP_PLATFORM_HCC__
     #endif
     #include <hip/hip_runtime.h>
     #include <rocfft.h>
-
     #define data_type   double
     #define plan_type   double
     #define host_malloc(h_, size_)
@@ -40,7 +38,15 @@ cmake -DENABLE_CUFFT = ON ..
     #define device_mfree(g_)
     #define gpu_copy_h2d(h_, g_, size_)
     #define gpu_copy_d2h(h_, g_, size_)
-
+#elif defined(ENABLE_VKFFT)
+    #define data_type   double
+    #define plan_type   double
+    #define host_malloc(h_, size_)
+    #define device_malloc(g_, size_)
+    #define host_mfree(h_)
+    #define device_mfree(g_)
+    #define gpu_copy_h2d(h_, g_, size_)
+    #define gpu_copy_d2h(h_, g_, size_)
 #else
     #define data_type   double
     #define plan_type   double
@@ -50,7 +56,6 @@ cmake -DENABLE_CUFFT = ON ..
     #define device_mfree(g_)
     #define gpu_copy_h2d(h_, g_, size_)
     #define gpu_copy_d2h(h_, g_, size_)
-
 #endif
 
 

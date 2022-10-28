@@ -6,8 +6,9 @@ project("FFT_Benchmarks" VERSION 0.1 LANGUAGES CXX)
 # Default Options
 #################
 
-option(ENABLE_ROCFFT       "Enable the ROCFFT backend"       OFF)
 option(ENABLE_CUFFT        "Enable the CUFFFT backend"       OFF)
+option(ENABLE_ROCFFT       "Enable the ROCFFT backend"       OFF)
+option(ENABLE_VKFFT        "Enable the VKFFFT backend"       OFF)
 option(ENABLE_FFTW         "Enable the FFTW backend"         OFF)
 
 set(CMAKE_C_FLAGS "-lm")
@@ -16,17 +17,22 @@ set(CMAKE_C_FLAGS "-lm")
 # Library definitions
 #####################
 
+if (ENABLE_CUFFT)
+    add_definitions(-DENABLE_CUFFT)
+    find_package(CUDA REQUIRED)
+    list(APPEND CUDA_NVCC_FLAGS "-std=c++11")
+endif()
+
 if (ENABLE_ROCFFT)
     add_definitions(-DENABLE_ROCFFT)
     set(ROCM_FLAGS "" CACHE STRING "added flags specific to the rocFFT backend")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ROCM_FLAGS}")
 endif()
 
-if (ENABLE_CUFFT)
-    add_definitions(-DENABLE_CUFFT)
-    find_package(CUDA REQUIRED)
-    list(APPEND CUDA_NVCC_FLAGS "-std=c++11")
+if (ENABLE_VKFFT)
+    add_definitions(-DENABLE_VKFFT)
 endif()
+
 
 if (ENABLE_FFTW)
     add_definitions(-DENABLE_FFTW)
@@ -47,8 +53,8 @@ macro(add_benchmark benchmark)
 
     if (ENABLE_ROCFFT)
         target_link_libraries(${benchmark} roc::rocfft)
-
     endif()
+    
     if (ENABLE_FFTW)
         target_link_libraries(${benchmark} fftw3)
     endif()
