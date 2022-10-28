@@ -32,6 +32,15 @@ cmake -DENABLE_CUFFT = ON ..
     #include <hip/hip_runtime.h>
     #include <rocfft.h>
 
+    #define data_type   double
+    #define plan_type   double
+    #define host_malloc(h_, size_)
+    #define device_malloc(g_, size_)
+    #define host_mfree(h_)
+    #define device_mfree(g_)
+    #define gpu_copy_h2d(h_, g_, size_)
+    #define gpu_copy_d2h(h_, g_, size_)
+
 #else
     #define data_type   double
     #define plan_type   double
@@ -55,7 +64,7 @@ int main()
     std::vector<std::complex<double>> input(fft_size);
     std::vector<std::complex<double>> output(fft_size);
 
-    std::vector<double> time_lib_gpu(niter,0.0), time_vkfft(niter,0.0), time_fftw(niter,0.0);
+    std::vector<double> time_cufft(niter,0.0), time_rocfft(niter,0.0), time_vkfft(niter,0.0), time_fftw(niter,0.0);
 
     data_type *d_data_in = NULL, *d_data_out = NULL;
     plan_type plan;
@@ -70,17 +79,15 @@ int main()
     for(auto &e : input)
         e = static_cast<double>(unif(park_miller));
 
-    // for(int i=0; i < input.size(); i++){
-    //     std::cout << input.at(i) << ' ';
-    //     // std::cout << input.at(i).real() << "+ 1i" << input.at(i).imag() <<  ' ';
-    // }
-    // std::cout<< "\n";
+    for(int i=0; i < input.size(); i++){
+        std::cout << input.at(i) << ' ';
+        // std::cout << input.at(i).real() << "+ 1i" << input.at(i).imag() <<  ' ';
+    }
+    std::cout<< "\n";
 
     gpu_copy_h2d(input.data(), d_data_in, mem_size);
-    std::string gpu_lib;
 
     #if defined(ENABLE_CUFFT)
-        gpu_lib = "cuFFT";
         // cufftPlan3d(&plan, N[0], N[1], N[2], CUFFT_Z2Z);
         cufftPlan1d(&plan, fft_size, CUFFT_Z2Z, 1);
 
@@ -91,17 +98,18 @@ int main()
             cudaDeviceSynchronize();
             auto end = std::chrono::steady_clock::now();
             std::chrono::duration<double> elapsed_seconds = end-start;
-            time_lib_gpu.at(i)= elapsed_seconds.count();
+            time_cufft.at(i)= elapsed_seconds.count();
         }
+
     #elif defined(ENABLE_ROCFFT)
-        gpu_lib = "rocFFT";
+                
     #endif
 
     gpu_copy_d2h(output.data(), d_data_out, mem_size);
 
-    // for(int i=0; i < output.size(); i++)
-    //     std::cout << output.at(i) << ' ';
-    // std::cout<< "\n";
+    for(int i=0; i < output.size(); i++)
+        std::cout << output.at(i) << ' ';
+    std::cout<< "\n";
 
     // Inverse FFT
     #if defined(ENABLE_CUFFT)
@@ -111,9 +119,9 @@ int main()
     // Check Error  \| X - IFFT(X) \|
     gpu_copy_d2h(output.data(), d_data_out, mem_size);
 
-    // for(int i=0; i < output.size(); i++)
-    //     std::cout << output.at(i) << ' ';
-    // std::cout<< "\n";
+    for(int i=0; i < output.size(); i++)
+        std::cout << output.at(i) << ' ';
+    std::cout<< "\n";
     
     double norm_i, e = 0.0;
 
@@ -122,18 +130,18 @@ int main()
         e = std::max(e, norm_i);
     }
     
-    std::cout<< "\n===========================================\n";
-    std::cout<< "\t\tRuntime (s)\n";
-    std::cout<<gpu_lib<<"rocFFT\t\tvkFFT\t\tFFTW\n";
-    std::cout<< "===========================================\n";
+    std::cout<< "\n==========================================================\n";
+    std::cout<< "\t\t\tRuntime (s)\n";
+    std::cout<<"cuFFT\t\trocFFT\t\tvkFFT\t\tFFTW\n";
+    std::cout<< "==========================================================\n";
 
     for(int i=0; i < niter; i++)
-        std::cout << time_lib_gpu[i] << "\t" << time_vkfft[i] << "\t" << time_fftw[i] << std::endl;
+        std::cout << time_cufft[i] << "\t"  << time_rocfft[i] << "\t" << time_vkfft[i] << "\t" << time_fftw[i] << std::endl;
 
     std::cout<< "\nSize: ";
     for(int i=0; i < N.size(); i++)
         std::cout << N.at(i) << 'x';
 
-    std::cout<< "\n|FFT(X)-iFFT(X)|_{infty}: " << e << std::endl;
+    std::cout<< "\t |FFT(X)-iFFT(X)|_{infty}: " << e << std::endl;
 
 }

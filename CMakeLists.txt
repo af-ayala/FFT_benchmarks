@@ -15,6 +15,7 @@ set(CMAKE_C_FLAGS "-lm")
 #####################
 # Library definitions
 #####################
+
 if (ENABLE_ROCFFT)
     add_definitions(-DENABLE_ROCFFT)
     set(ROCM_FLAGS "" CACHE STRING "added flags specific to the rocFFT backend")
